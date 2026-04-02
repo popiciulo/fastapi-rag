@@ -1,17 +1,8 @@
-from ollama import Client, ListResponse, list
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from ollama import Client, ListResponse, AsyncClient, list
+from fastapi import HTTPException
+from app.schemas.ai_schemas import ModelParameters, CreateModel    
 
 
-router = APIRouter(tags=["AI Models"])
-
-
-class CreateModel(BaseModel):
-    selected_model: str
-    new_model_name: str | None = None
-    system_prompt: str
-
-@router.get("/models")
 async def list_models(family: str | None = None):
     response: ListResponse = list()
     if not response.models:
@@ -22,10 +13,9 @@ async def list_models(family: str | None = None):
     if family:
         filtered = [m for m in response.models if m.details.family == family]
         return {"families": families, "models": filtered}
-
     return {"families": families, "models": response.models}
-    
-@router.post("/create_model")
+
+
 async def create_new_model(model: CreateModel):
     model.new_model_name = model.new_model_name or f"{model.selected_model}-assistant"
     model.system_prompt = model.system_prompt or f"You are my personal assistant"
@@ -40,10 +30,19 @@ async def create_new_model(model: CreateModel):
       system=model.system_prompt,
       stream=False,
     )
-
     return response.status
-
 
 def model_exists(name: str):    
     response: ListResponse = list()    
     return any(f.model == name for f in response.models)
+
+async def get_streaming_model_answer(parameters: ModelParameters):
+    client = AsyncClient()
+    response = await client.generate(parameters.model_name, parameters.prompt, stream=True)
+    async for chunk in response:
+        yield chunk['response']
+
+async def get_model_answer(parameters: ModelParameters):
+    client = AsyncClient()
+    response = await client.chat(parameters.model_name, messages=[{"role": "user", "content": parameters.prompt}])
+    return response
