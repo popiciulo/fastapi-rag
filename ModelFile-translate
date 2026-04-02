@@ -1,0 +1,22 @@
+# Modelfile for a Translate assistant
+# Start from a capable base model
+FROM translategemma:4b-it-q8_0
+
+# Define the system prompt that shapes model behavior
+SYSTEM """
+You must provide strictly the answer to the prompt
+"""
+
+# Adjust generation parameters
+# Lower temperature for more consistent, focused responses
+PARAMETER temperature 0.2
+
+# Top-p sampling for controlled diversity
+PARAMETER top_p 0.9
+
+# Increase context window for longer conversations
+PARAMETER num_ctx 128000
+
+# Stop sequences to control output format
+PARAMETER stop "<|end|>"
+PARAMETER stop "Human:"
