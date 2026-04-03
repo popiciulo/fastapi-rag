@@ -21,7 +21,7 @@ async def ask_model(parameters: ModelParameters):
     
 @router.post("/personal/ask")
 async def ask_personal_model(query: str, chroma_client = Depends((get_chroma_client))):
-    return await ai_service.get_personal_model_answer(query, chroma_client)
+    return await ai_service.get_personal_model_answer(chroma_client, query)
 
 @router.post("/personal/tell")
 async def tell_personal_model(journal_entry: AddJournalEntry, chroma_client = Depends((get_chroma_client))):
