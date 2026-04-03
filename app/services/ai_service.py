@@ -1,6 +1,6 @@
 from ollama import Client, ListResponse, AsyncClient, list
 from fastapi import HTTPException
-from app.schemas.ai_schemas import ModelParameters, CreateModel    
+from app.schemas.ai_schemas import ModelParameters, CreateModel, ChatOptions 
 
 
 async def list_models(family: str | None = None):
@@ -38,11 +38,26 @@ def model_exists(name: str):
 
 async def get_streaming_model_answer(parameters: ModelParameters):
     client = AsyncClient()
-    response = await client.generate(parameters.model_name, parameters.prompt, stream=True)
+    response = await client.generate(
+        parameters.model_name, 
+        parameters.prompt, 
+        stream=True,
+        options=parameters.options.to_dict()
+    )
     async for chunk in response:
         yield chunk['response']
 
 async def get_model_answer(parameters: ModelParameters):
     client = AsyncClient()
-    response = await client.chat(parameters.model_name, messages=[{"role": "user", "content": parameters.prompt}])
+
+    response = await client.chat(
+        parameters.model_name, 
+        messages=[{"role": "user", "content": parameters.prompt}],
+        options=parameters.options.to_dict()
+        )
+
     return response
+
+async def get_personal_model_answer(query: str, client):
+    # get the information from chromadb and then ask the question to the personal model
+    pass
